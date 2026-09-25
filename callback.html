@@ -1,0 +1,27 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OAuth Callback · 라이프포터</title>
+<style>*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic',Roboto,sans-serif;line-height:1.8;color:#1f2937;background:#f8fafc;display:flex;align-items:center;justify-content:center;min-height:100vh}
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:32px 28px;max-width:640px;margin:24px;box-shadow:0 1px 3px rgba(15,23,42,.05)}
+h1{font-size:20px;color:#0e2a4a;margin:0 0 12px}code{word-break:break-all;background:#f1f5f9;padding:2px 6px;border-radius:6px;font-size:13px}
+.ok{color:#0f766e;font-weight:700}.warn{color:#b45309;font-weight:700}</style></head>
+<body><div class="card"><h1 id="h">TikTok 승인 처리 중…</h1><p id="m">잠시만 기다려 주세요.</p><p id="d" style="font-size:13px;color:#64748b"></p></div>
+<script>
+(function () {
+  var q = window.location.search.replace(/^\?/, '');
+  var p = new URLSearchParams(q);
+  var target = 'http://127.0.0.1:8766/callback' + (q ? '?' + q : '');
+  var h = document.getElementById('h'), m = document.getElementById('m'), d = document.getElementById('d');
+  if (p.get('code') || p.get('error')) {
+    h.textContent = '승인 확인 — 로컬 프로그램으로 전달합니다';
+    h.className = 'ok';
+    m.innerHTML = '이 창이 자동으로 닫히지 않으면 아래 주소를 그대로 열어 주세요.<br><code>' + target.replace(/</g,'&lt;') + '</code>';
+    d.textContent = '잠시 후 자동 이동합니다…';
+    window.location.replace(target);
+  } else {
+    h.textContent = '대기 중';
+    h.className = 'warn';
+    m.textContent = 'TikTok 로그인 승인을 마치면 이 주소로 자동 돌아옵니다.';
+  }
+})();
+</script></body></html>
