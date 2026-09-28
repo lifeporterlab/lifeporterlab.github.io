@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>라이프포터 · TikTok 콘텐츠 업로드</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:'Malgun Gothic','Apple SD Gothic Neo',system-ui,sans-serif;background:radial-gradient(1200px 600px at 20% -10%,#1b2130,#0b0d12 60%);color:#eef1f6;min-height:100vh}
+.wrap{max-width:920px;margin:0 auto;padding:40px 24px 80px}
+.brand{display:flex;align-items:center;gap:14px}
+.logo{width:56px;height:56px;border-radius:16px;background:#000;border:1px solid #2b3140;display:flex;align-items:center;justify-content:center;color:#d4af37;font-weight:800;font-size:20px}
+h1{font-size:23px;margin:0}
+.sub{color:#8d97a8;font-size:13px;margin-top:4px}
+.card{background:#12151d;border:1px solid #232937;border-radius:18px;padding:22px;margin-top:22px;box-shadow:0 10px 40px rgba(0,0,0,.35)}
+.step{display:flex;gap:16px;padding:18px 0;border-bottom:1px dashed #232937}
+.step:last-child{border-bottom:0}
+.num{width:30px;height:30px;border-radius:50%;background:#1d2330;color:#9aa6ba;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex:0 0 auto}
+.step.on .num{background:#d4af37;color:#141821}
+.step.done .num{background:#43d17a;color:#0d1a12}
+.step h3{margin:0 0 7px;font-size:16px}
+.step p{margin:0;color:#8d97a8;font-size:13.5px;line-height:1.65}
+button{background:#d4af37;color:#141821;border:0;border-radius:11px;padding:12px 20px;font-size:14px;font-weight:800;cursor:pointer;margin-top:12px}
+button:disabled{background:#2a3040;color:#6c7585;cursor:default}
+button.ghost{background:#1d2330;color:#dfe4ee;margin-left:8px}
+.pill{display:inline-flex;align-items:center;gap:8px;background:#0e1118;border:1px solid #232937;border-radius:999px;padding:8px 14px;font-size:13px;color:#c7cede;margin-top:12px}
+.ok{color:#43d17a}
+input[type=file]{margin-top:12px;color:#c7cede;font-size:13px;display:block}
+video{margin-top:12px;width:220px;border-radius:12px;background:#000;border:1px solid #232937}
+.log{margin-top:18px;background:#0a0c11;border:1px solid #1c2130;border-radius:12px;padding:12px;font-family:Consolas,monospace;font-size:12px;color:#8fa0bd;white-space:pre-wrap;max-height:220px;overflow:auto}
+.foot{color:#5d677d;font-size:12px;margin-top:20px;text-align:center}
+a{color:#9fb6ff}
+.flow{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.flow span{font-size:11.5px;background:#0e1118;border:1px solid #232937;border-radius:999px;padding:5px 11px;color:#9aa6ba}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">
+    <div class="logo">LP</div>
+    <div>
+      <h1>라이프포터 콘텐츠 업로드</h1>
+      <div class="sub">1분 복지머니 &middot; 영상을 TikTok 초안으로 전송</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="flow">
+      <span>Login Kit</span><span>user.info.basic</span><span>Content Posting API</span><span>video.upload</span>
+    </div>
+
+    <div class="step on" id="s1">
+      <div class="num">1</div>
+      <div>
+        <h3>TikTok 계정 연결</h3>
+        <p>TikTok Login Kit으로 계정을 인증합니다. 인증 후 발급된 액세스 토큰으로 본인 계정에 영상을 전송합니다.</p>
+        <button id="btnConnect">TikTok 계정 연결하기</button>
+        <div class="pill" id="pillConn" style="display:none">&#10004; 연결됨 <span id="openId"></span></div>
+      </div>
+    </div>
+
+    <div class="step" id="s2">
+      <div class="num">2</div>
+      <div>
+        <h3>영상 선택 &amp; 초안 업로드</h3>
+        <p>Content Posting API로 영상을 TikTok 계정의 <b>초안(draft)</b>으로 전송합니다. TikTok 앱에서 확인 후 게시할 수 있습니다.</p>
+        <input type="file" id="file" accept="video/mp4,video/quicktime">
+        <video id="preview" controls muted style="display:none"></video>
+        <br>
+        <button id="btnUpload" disabled>업로드</button>
+        <button id="btnOpen" class="ghost" style="display:none">TikTok 초안함 열기</button>
+      </div>
+    </div>
+
+    <div class="step" id="s3">
+      <div class="num">3</div>
+      <div>
+        <h3>전송 결과</h3>
+        <p id="resultText">아직 업로드하지 않았습니다.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="log" id="log">[ready] lifeporter TikTok uploader</div>
+  <div class="foot">lifeporter &middot; <a href="https://lifeporterlab.github.io/">lifeporterlab.github.io</a></div>
+</div>
+
+<script>
+var BRIDGE = 'https://script.google.com/macros/s/AKfycbx5JHWWHL515vqaBuBbF3JD3XodQuYYfAUBa4-ktsQ8o2m0NrXQGJnm9zmTOLgWy2am/exec';
+var BRIDGE_TOKEN = 'brg_1c23393ea1424cfde6b054db8eb154af770d1714';
+var CLIENT_KEY = 'sbawyf8e4ljlowvoo1';
+var ENV = 'sandbox';
+var REDIRECT_URI = 'https://lifeporterlab.github.io/tiktok.html';
+
+var logEl = document.getElementById('log');
+function log(m){ logEl.textContent += '\n' + m; logEl.scrollTop = logEl.scrollHeight; }
+
+function bridge(payload){
+  payload.token = BRIDGE_TOKEN;
+  return fetch(BRIDGE, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload)
+  }).then(function(r){ return r.text(); }).then(function(t){
+    try { return JSON.parse(t); } catch(e){ return { ok:false, error:'bad response', raw: String(t).slice(0,300) }; }
+  });
+}
+
+var accessToken = null;
+var openId = null;
+var publishId = null;
+
+document.getElementById('btnConnect').onclick = function(){
+  var state = Math.random().toString(36).slice(2);
+  sessionStorage.setItem('tt_state', state);
+  log('[auth] TikTok 인증 페이지로 이동');
+  location.href = 'https://www.tiktok.com/v2/auth/authorize/?client_key=' + CLIENT_KEY +
+    '&response_type=code&scope=user.info.basic,video.upload&redirect_uri=' +
+    encodeURIComponent(REDIRECT_URI) + '&state=' + state;
+};
+
+var q = new URLSearchParams(location.search);
+if (q.get('code')) {
+  var code = q.get('code');
+  history.replaceState({}, '', location.pathname);
+  log('[auth] authorization code 수신');
+  bridge({ op:'token', env: ENV, code: code, redirect_uri: REDIRECT_URI }).then(function(j){
+    if (j && j.ok && j.body && j.body.access_token) {
+      accessToken = j.body.access_token;
+      openId = j.body.open_id;
+      log('[auth] 연결 완료  open_id=' + openId);
+      document.getElementById('s1').classList.remove('on');
+      document.getElementById('s1').classList.add('done');
+      document.getElementById('s2').classList.add('on');
+      document.getElementById('openId').textContent = '@lifeporter (' + String(openId).slice(0,8) + '...)';
+      document.getElementById('pillConn').style.display = 'inline-flex';
+      document.getElementById('btnConnect').disabled = true;
+      document.getElementById('btnUpload').disabled = false;
+    } else {
+      log('[auth] 실패 ' + JSON.stringify(j).slice(0,300));
+    }
+  });
+}
+
+document.getElementById('file').onchange = function(){
+  var f = this.files[0];
+  if (!f) return;
+  var pv = document.getElementById('preview');
+  pv.style.display = 'block';
+  pv.src = URL.createObjectURL(f);
+  log('[file] ' + f.name + ' (' + (f.size/1048576).toFixed(1) + 'MB)');
+};
+
+document.getElementById('btnUpload').onclick = function(){
+  var f = document.getElementById('file').files[0];
+  if (!f) { log('[upload] 영상을 선택하세요'); return; }
+  var btn = this;
+  btn.disabled = true; btn.textContent = '업로드 중...';
+  document.getElementById('s2').classList.add('done');
+  document.getElementById('s3').classList.add('on');
+  log('[upload] Content Posting API 초기화 요청');
+  bridge({ op:'init', access_token: accessToken, video_size: f.size, title: '1분 복지머니 - 라이프포터' })
+  .then(function(j){
+    var d = j && j.result && j.result.json && j.result.json.data;
+    if (!d || !d.upload_url) { log('[init] 실패 ' + JSON.stringify(j).slice(0,300)); btn.textContent='업로드 실패'; btn.disabled=false; return; }
+    publishId = d.publish_id;
+    log('[init] publish_id=' + publishId);
+    log('[upload] 파일 전송 중 (' + (f.size/1048576).toFixed(1) + 'MB)');
+    return new Promise(function(res){ var rd = new FileReader(); rd.onload = function(){ res(rd.result.split(',')[1]); }; rd.readAsDataURL(f); })
+      .then(function(b64){
+        return bridge({ op:'put', upload_url: d.upload_url, data_b64: b64 });
+      });
+  })
+  .then(function(j2){
+    if (!j2) return;
+    log('[upload] 전송 완료 status=' + j2.status);
+    document.getElementById('resultText').innerHTML = '<span class="ok">업로드 완료.</span> TikTok 앱/스튜디오의 초안함에서 확인하고 게시할 수 있습니다.';
+    btn.textContent = '업로드 완료';
+    
+    document.getElementById('btnOpen').style.display = 'inline-block';
+  });
+};
+
+document.getElementById('btnOpen').onclick = function(){
+  location.href = 'https://www.tiktok.com/tiktokstudio/content';
+};
+</script>
+</body>
+</html>
