@@ -116,7 +116,7 @@ document.getElementById('btnConnect').onclick = function(){
   log('[auth] TikTok 인증 페이지로 이동');
   location.href = 'https://www.tiktok.com/v2/auth/authorize/?client_key=' + CLIENT_KEY +
     '&response_type=code&scope=user.info.basic,video.upload&redirect_uri=' +
-    encodeURIComponent(REDIRECT_URI) + '&state=' + state;
+    encodeURIComponent(REDIRECT_URI) + '&state=' + state + '&disable_auto_auth=1';
 };
 
 var q = new URLSearchParams(location.search);
