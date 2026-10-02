@@ -1,189 +1,567 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>라이프포터 · TikTok 콘텐츠 업로드</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TikTok 크리에이터 업로더 (초안 업로드)</title>
+<meta name="description" content="TikTok 계정을 연결해 영상 초안을 본인의 TikTok 받은함으로 업로드하는 공개 서비스입니다.">
+<!--
+  배포 전 https://script.google.com/macros/s/AKfycbx5JHWWHL515vqaBuBbF3JD3XodQuYYfAUBa4-ktsQ8o2m0NrXQGJnm9zmTOLgWy2am/exec 을 실제 브릿지(Google Apps Script 웹앱) URL로 교체하세요.
+  이 파일에는 브릿지 토큰, 클라이언트 키 등 어떤 비밀값도 포함되어 있지 않습니다.
+  이 화면은 TikTok에 자동/직접 게시하지 않습니다. 업로드된 영상은 "초안"으로 사용자의
+  TikTok 받은함(인박스)에 전달되며, 최종 게시는 반드시 사용자가 TikTok 앱에서 직접 수행합니다.
+-->
 <style>
-*{box-sizing:border-box}
-body{margin:0;font-family:'Malgun Gothic','Apple SD Gothic Neo',system-ui,sans-serif;background:radial-gradient(1200px 600px at 20% -10%,#1b2130,#0b0d12 60%);color:#eef1f6;min-height:100vh}
-.wrap{max-width:920px;margin:0 auto;padding:40px 24px 80px}
-.brand{display:flex;align-items:center;gap:14px}
-.logo{width:56px;height:56px;border-radius:16px;background:#000;border:1px solid #2b3140;display:flex;align-items:center;justify-content:center;color:#d4af37;font-weight:800;font-size:20px}
-h1{font-size:23px;margin:0}
-.sub{color:#8d97a8;font-size:13px;margin-top:4px}
-.card{background:#12151d;border:1px solid #232937;border-radius:18px;padding:22px;margin-top:22px;box-shadow:0 10px 40px rgba(0,0,0,.35)}
-.step{display:flex;gap:16px;padding:18px 0;border-bottom:1px dashed #232937}
-.step:last-child{border-bottom:0}
-.num{width:30px;height:30px;border-radius:50%;background:#1d2330;color:#9aa6ba;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex:0 0 auto}
-.step.on .num{background:#d4af37;color:#141821}
-.step.done .num{background:#43d17a;color:#0d1a12}
-.step h3{margin:0 0 7px;font-size:16px}
-.step p{margin:0;color:#8d97a8;font-size:13.5px;line-height:1.65}
-button{background:#d4af37;color:#141821;border:0;border-radius:11px;padding:12px 20px;font-size:14px;font-weight:800;cursor:pointer;margin-top:12px}
-button:disabled{background:#2a3040;color:#6c7585;cursor:default}
-button.ghost{background:#1d2330;color:#dfe4ee;margin-left:8px}
-.pill{display:inline-flex;align-items:center;gap:8px;background:#0e1118;border:1px solid #232937;border-radius:999px;padding:8px 14px;font-size:13px;color:#c7cede;margin-top:12px}
-.ok{color:#43d17a}
-input[type=file]{margin-top:12px;color:#c7cede;font-size:13px;display:block}
-video{margin-top:12px;width:220px;border-radius:12px;background:#000;border:1px solid #232937}
-.log{margin-top:18px;background:#0a0c11;border:1px solid #1c2130;border-radius:12px;padding:12px;font-family:Consolas,monospace;font-size:12px;color:#8fa0bd;white-space:pre-wrap;max-height:220px;overflow:auto}
-.foot{color:#5d677d;font-size:12px;margin-top:20px;text-align:center}
-a{color:#9fb6ff}
-.flow{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-.flow span{font-size:11.5px;background:#0e1118;border:1px solid #232937;border-radius:999px;padding:5px 11px;color:#9aa6ba}
+  :root{
+    --bg:#f7f7f8; --card:#ffffff; --fg:#17181a; --muted:#6b7076;
+    --border:#e3e4e7; --accent:#111317; --accent-fg:#ffffff;
+    --danger-bg:#fdecec; --danger-fg:#9c1c1c; --danger-border:#f4b9b9;
+    --success-bg:#e9f8ee; --success-fg:#1e7a3c; --success-border:#b8e6c6;
+    --warn-bg:#fff6e5; --warn-fg:#8a5a00; --warn-border:#f3d79a;
+    --info-bg:#eef1f5; --info-fg:#3a4552; --info-border:#d7dde4;
+    --radius:12px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg); color:var(--fg);
+    font-family:'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',system-ui,sans-serif;
+    line-height:1.55; padding:16px;
+  }
+  .wrap{max-width:640px;margin:0 auto;}
+  header.page-header{margin-bottom:16px;}
+  h1{font-size:1.4rem;margin:0 0 4px;}
+  .sub-en{color:var(--muted);font-size:0.85rem;margin:0 0 12px;}
+  .card{
+    background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+    padding:18px; margin-bottom:16px;
+  }
+  .card h2{font-size:1.05rem;margin:0 0 10px;}
+  .banner{
+    border-radius:var(--radius); padding:12px 14px; font-size:0.9rem; margin-bottom:16px;
+    border:1px solid var(--info-border); background:var(--info-bg); color:var(--info-fg);
+  }
+  .banner-sandbox{background:var(--warn-bg);color:var(--warn-fg);border-color:var(--warn-border);}
+  .banner-production{background:var(--success-bg);color:var(--success-fg);border-color:var(--success-border);}
+  .banner-unknown{background:var(--info-bg);color:var(--info-fg);border-color:var(--info-border);}
+  button{
+    font-size:0.95rem; padding:10px 16px; border-radius:10px; border:1px solid var(--border);
+    background:var(--accent); color:var(--accent-fg); cursor:pointer;
+  }
+  button.secondary{background:#fff;color:var(--fg);}
+  button.danger{background:#fff;color:var(--danger-fg);border-color:var(--danger-border);}
+  button:disabled{opacity:0.45;cursor:not-allowed;}
+  .identity{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .identity img{width:44px;height:44px;border-radius:50%;background:#eee;object-fit:cover;}
+  .identity .name{font-weight:600;}
+  .identity .connected-tag{font-size:0.78rem;color:var(--success-fg);}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .help{color:var(--muted);font-size:0.82rem;margin-top:4px;}
+  label.consent{display:flex;gap:8px;align-items:flex-start;font-size:0.9rem;margin:12px 0;}
+  label.consent input{margin-top:3px;}
+  video#preview{width:100%;max-height:360px;border-radius:10px;background:#000;margin-top:10px;display:none;}
+  .msg{border-radius:10px;padding:10px 12px;font-size:0.88rem;margin-top:10px;}
+  .msg[hidden]{display:none;}
+  .error-msg{background:var(--danger-bg);color:var(--danger-fg);border:1px solid var(--danger-border);}
+  .status-message{background:var(--info-bg);color:var(--info-fg);border:1px solid var(--info-border);}
+  .status-message.status-success{background:var(--success-bg);color:var(--success-fg);border-color:var(--success-border);}
+  .status-message.status-error{background:var(--danger-bg);color:var(--danger-fg);border-color:var(--danger-border);}
+  .next-steps{margin-top:10px;}
+  .next-steps ol{margin:6px 0 0 18px;padding:0;font-size:0.9rem;}
+  footer{margin-top:24px;font-size:0.82rem;color:var(--muted);text-align:center;}
+  footer a{color:var(--muted);text-decoration:underline;margin:0 6px;}
+  .progress-track{height:8px;background:#eee;border-radius:6px;overflow:hidden;margin-top:10px;display:none;}
+  .progress-fill{height:100%;background:var(--accent);width:0%;transition:width .2s;}
+  .faq{font-size:0.85rem;color:var(--muted);}
+  .faq dt{font-weight:600;color:var(--fg);margin-top:8px;}
+  @media (max-width:420px){
+    h1{font-size:1.2rem;}
+    .card{padding:14px;}
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="brand">
-    <div class="logo">LP</div>
-    <div>
-      <h1>라이프포터 콘텐츠 업로드</h1>
-      <div class="sub">1분 복지머니 &middot; 영상을 TikTok 초안으로 전송</div>
-    </div>
+
+  <header class="page-header">
+    <h1>TikTok 크리에이터 업로더 (초안 업로드)</h1>
+    <p class="sub-en" lang="en">Public service: connect your own TikTok account and send a draft video to your TikTok inbox. You post it yourself in the TikTok app.</p>
+  </header>
+
+  <div id="envBanner" class="banner banner-unknown" role="status">
+    환경 확인 전입니다. TikTok 계정 연결을 시작하면 실제 서비스 환경(샌드박스/프로덕션)이 여기에 표시됩니다.
   </div>
 
-  <div class="card">
-    <div class="flow">
-      <span>Login Kit</span><span>user.info.basic</span><span>Content Posting API</span><span>video.upload</span>
-    </div>
-
-    <div class="step on" id="s1">
-      <div class="num">1</div>
+  <section class="card" id="accountCard">
+    <h2>1. TikTok 계정 연결</h2>
+    <div id="identityView" class="identity" hidden>
+      <img id="avatarImg" src="" alt="" referrerpolicy="no-referrer" onerror="this.style.display='none'">
       <div>
-        <h3>TikTok 계정 연결</h3>
-        <p>TikTok Login Kit으로 계정을 인증합니다. 인증 후 발급된 액세스 토큰으로 본인 계정에 영상을 전송합니다.</p>
-        <button id="btnConnect">TikTok 계정 연결하기</button>
-        <div class="pill" id="pillConn" style="display:none">&#10004; 연결됨 <span id="openId"></span></div>
+        <div class="name" id="displayNameEl"></div>
+        <div class="connected-tag">연결됨</div>
       </div>
     </div>
+    <div class="row">
+      <button type="button" id="connectBtn">TikTok 계정 연결하기</button>
+      <button type="button" id="disconnectBtn" class="danger" hidden>연결 해제</button>
+    </div>
+    <p class="help">연결 정보는 브라우저 메모리에만 보관되며 새로고침하거나 연결을 해제하면 즉시 사라집니다. 서버에도 장시간 보관하지 않습니다(자세한 내용은 아래 안내 문서 참고).</p>
+  </section>
 
-    <div class="step" id="s2">
-      <div class="num">2</div>
-      <div>
-        <h3>영상 선택 &amp; 초안 업로드</h3>
-        <p>Content Posting API로 영상을 TikTok 계정의 <b>초안(draft)</b>으로 전송합니다. TikTok 앱에서 확인 후 게시할 수 있습니다.</p>
-        <input type="file" id="file" accept="video/mp4,video/quicktime">
-        <video id="preview" controls muted style="display:none"></video>
-        <br>
-        <button id="btnUpload" disabled>업로드</button>
-        <button id="btnOpen" class="ghost" style="display:none">TikTok 초안함 열기</button>
-      </div>
+  <section class="card" id="uploadCard">
+    <h2>2. 영상 업로드 (초안)</h2>
+    <p class="help">직접 게시 기능은 제공하지 않습니다. 업로드한 영상은 TikTok 받은함(인박스)에 초안으로 전달되며, 게시는 반드시 TikTok 앱에서 본인이 직접 진행해야 합니다.</p>
+
+    <input type="file" id="fileInput" accept="video/*">
+    <p class="help">동영상 파일만 가능, 최대 20MB까지 업로드할 수 있습니다.</p>
+    <p class="help">이 기능에 대한 개인정보 처리 내용은 일반 콘텐츠 열람과 별도로 적용됩니다. 자세히 보기: <a href="privacy.html#tiktok-uploader-privacy" target="_blank" rel="noopener">개인정보처리방침 추가 조항</a></p>
+    <video id="preview" controls></video>
+
+    <label class="consent">
+      <input type="checkbox" id="consentCheck">
+      <span>본인은 이 영상에 대한 권리를 보유하고 있고, <a href="privacy.html#tiktok-uploader-privacy" target="_blank" rel="noopener">개인정보 처리 안내(추가 조항)</a>를 확인했으며, 이 영상을 TikTok 받은함으로 초안 업로드하는 것에 동의합니다.</span>
+    </label>
+
+    <div class="row">
+      <button type="button" id="uploadBtn" disabled>업로드 시작</button>
+      <button type="button" id="checkStatusBtn" disabled>상태 확인</button>
     </div>
 
-    <div class="step" id="s3">
-      <div class="num">3</div>
-      <div>
-        <h3>전송 결과</h3>
-        <p id="resultText">아직 업로드하지 않았습니다.</p>
-      </div>
-    </div>
-  </div>
+    <div class="progress-track" id="progressTrack"><div class="progress-fill" id="progressFill"></div></div>
 
-  <div class="log" id="log">[ready] lifeporter TikTok uploader</div>
-  <div class="foot">lifeporter &middot; <a href="https://lifeporterlab.github.io/">lifeporterlab.github.io</a></div>
+    <div id="statusMessage" class="msg status-message" hidden aria-live="polite"></div>
+    <div id="errorMessage" class="msg error-msg" hidden role="alert"></div>
+
+    <div id="nextSteps" class="next-steps" hidden>
+      <strong>다음 단계</strong>
+      <ol>
+        <li>TikTok 앱을 열고 알림 또는 받은함(인박스)을 확인하세요.</li>
+        <li>전달된 초안을 열어 필요하면 수정하세요.</li>
+        <li>TikTok 앱에서 직접 게시 버튼을 눌러주세요. (이 서비스는 대신 게시하지 않습니다.)</li>
+        <li>게시 후 이 페이지에서 "상태 확인"을 누르면 게시 완료 상태로 바뀌어 있을 수 있습니다. 반영 속도는 TikTok 서버 처리에 따라 다릅니다.</li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="card faq">
+    <h2 style="font-size:0.95rem;">안내</h2>
+    <dl>
+      <dt>이 서비스는 TikTok에 자동으로 게시하나요?</dt>
+      <dd>아니요. 영상은 초안으로만 전달되며, 게시 여부와 시점은 전적으로 사용자가 TikTok 앱에서 직접 결정합니다.</dd>
+      <dt>샌드박스(테스트) 상태란 무엇인가요?</dt>
+      <dd>TikTok 심사 승인 전까지는 TikTok 개발자 콘솔에 테스트 사용자로 등록된 계정만 이용할 수 있습니다. 화면 상단 배너에 실제 환경이 표시됩니다.</dd>
+      <dt>업로드한 영상이 서버에 저장되나요?</dt>
+      <dd>아니요. 영상 데이터는 TikTok으로 전달되는 동안만 일시적으로 거쳐가며 서버에 보관되지 않습니다.</dd>
+    </dl>
+  </section>
+
+  <footer>
+    <nav>
+      <a href="../terms.html">이용약관</a>
+      <a href="privacy.html">개인정보처리방침</a>
+      <a href="index.html">홈</a>
+    </nav>
+    <p>문의 및 오류 제보: <a href="https://lifeporter.tistory.com/" target="_blank" rel="noopener">lifeporter.tistory.com</a> 댓글 (개인정보는 남기지 말아주세요)</p>
+  </footer>
 </div>
 
 <script>
-var BRIDGE = 'https://script.google.com/macros/s/AKfycbx5JHWWHL515vqaBuBbF3JD3XodQuYYfAUBa4-ktsQ8o2m0NrXQGJnm9zmTOLgWy2am/exec';
-var BRIDGE_TOKEN = 'brg_1c23393ea1424cfde6b054db8eb154af770d1714';
-var CLIENT_KEY = 'sbawyf8e4ljlowvoo1';
-var ENV = 'sandbox';
-var REDIRECT_URI = 'https://lifeporterlab.github.io/tiktok.html';
+(function(){
+  "use strict";
 
-var logEl = document.getElementById('log');
-function log(m){ logEl.textContent += '\n' + m; logEl.scrollTop = logEl.scrollHeight; }
+  var BRIDGE_URL = "__BRIDGE_URL__";
+  var CHUNK_SIZE = 5242880; // 5MB, fixed per TikTok chunked upload contract
+  var MAX_FILE_BYTES = 20 * 1024 * 1024; // 20MB cap
+  var AUTO_POLL_INTERVAL_MS = 4000;
+  var AUTO_POLL_MAX_TRIES = 20; // ~80s of automatic polling, then manual-only
 
-function bridge(payload){
-  payload.token = BRIDGE_TOKEN;
-  return fetch(BRIDGE, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(payload)
-  }).then(function(r){ return r.text(); }).then(function(t){
-    try { return JSON.parse(t); } catch(e){ return { ok:false, error:'bad response', raw: String(t).slice(0,300) }; }
-  });
-}
+  // Session token lives in memory only. Never written to sessionStorage/localStorage.
+  // A page reload therefore clears it; it is also cleared explicitly after disconnect.
+  var session = null;
+  var currentObjectUrl = null;
+  var selectedFile = null;
+  var currentPublishId = null;
+  var autoPollTimer = null;
+  var autoPollCount = 0;
 
-var accessToken = null;
-var openId = null;
-var publishId = null;
+  var envBanner = document.getElementById("envBanner");
+  var identityView = document.getElementById("identityView");
+  var avatarImg = document.getElementById("avatarImg");
+  var displayNameEl = document.getElementById("displayNameEl");
+  var connectBtn = document.getElementById("connectBtn");
+  var disconnectBtn = document.getElementById("disconnectBtn");
+  var fileInput = document.getElementById("fileInput");
+  var previewEl = document.getElementById("preview");
+  var consentCheck = document.getElementById("consentCheck");
+  var uploadBtn = document.getElementById("uploadBtn");
+  var checkStatusBtn = document.getElementById("checkStatusBtn");
+  var statusMessageEl = document.getElementById("statusMessage");
+  var errorMessageEl = document.getElementById("errorMessage");
+  var nextStepsEl = document.getElementById("nextSteps");
+  var progressTrack = document.getElementById("progressTrack");
+  var progressFill = document.getElementById("progressFill");
 
-document.getElementById('btnConnect').onclick = function(){
-  var state = Math.random().toString(36).slice(2);
-  sessionStorage.setItem('tt_state', state);
-  log('[auth] TikTok 인증 페이지로 이동');
-  location.href = 'https://www.tiktok.com/v2/auth/authorize/?client_key=' + CLIENT_KEY +
-    '&response_type=code&scope=user.info.basic,video.upload&redirect_uri=' +
-    encodeURIComponent(REDIRECT_URI) + '&state=' + state + '&disable_auto_auth=1';
-};
-
-var q = new URLSearchParams(location.search);
-if (q.get('code')) {
-  var code = q.get('code');
-  history.replaceState({}, '', location.pathname);
-  log('[auth] authorization code 수신');
-  bridge({ op:'token', env: ENV, code: code, redirect_uri: REDIRECT_URI }).then(function(j){
-    if (j && j.ok && j.body && j.body.access_token) {
-      accessToken = j.body.access_token;
-      openId = j.body.open_id;
-      log('[auth] 연결 완료  open_id=' + openId);
-      document.getElementById('s1').classList.remove('on');
-      document.getElementById('s1').classList.add('done');
-      document.getElementById('s2').classList.add('on');
-      document.getElementById('openId').textContent = '@lifeporter (' + String(openId).slice(0,8) + '...)';
-      document.getElementById('pillConn').style.display = 'inline-flex';
-      document.getElementById('btnConnect').disabled = true;
-      document.getElementById('btnUpload').disabled = false;
+  function setError(msg){
+    if (msg){
+      errorMessageEl.textContent = msg;
+      errorMessageEl.hidden = false;
     } else {
-      log('[auth] 실패 ' + JSON.stringify(j).slice(0,300));
+      errorMessageEl.textContent = "";
+      errorMessageEl.hidden = true;
     }
-  });
-}
+  }
 
-document.getElementById('file').onchange = function(){
-  var f = this.files[0];
-  if (!f) return;
-  var pv = document.getElementById('preview');
-  pv.style.display = 'block';
-  pv.src = URL.createObjectURL(f);
-  log('[file] ' + f.name + ' (' + (f.size/1048576).toFixed(1) + 'MB)');
-};
+  function setPlainStatus(msg){
+    statusMessageEl.className = "msg status-message";
+    if (msg){
+      statusMessageEl.textContent = msg;
+      statusMessageEl.hidden = false;
+    } else {
+      statusMessageEl.textContent = "";
+      statusMessageEl.hidden = true;
+    }
+  }
 
-document.getElementById('btnUpload').onclick = function(){
-  var f = document.getElementById('file').files[0];
-  if (!f) { log('[upload] 영상을 선택하세요'); return; }
-  var btn = this;
-  btn.disabled = true; btn.textContent = '업로드 중...';
-  document.getElementById('s2').classList.add('done');
-  document.getElementById('s3').classList.add('on');
-  log('[upload] Content Posting API 초기화 요청');
-  bridge({ op:'init', access_token: accessToken, video_size: f.size, title: '1분 복지머니 - 라이프포터' })
-  .then(function(j){
-    var d = j && j.result && j.result.json && j.result.json.data;
-    if (!d || !d.upload_url) { log('[init] 실패 ' + JSON.stringify(j).slice(0,300)); btn.textContent='업로드 실패'; btn.disabled=false; return; }
-    publishId = d.publish_id;
-    log('[init] publish_id=' + publishId);
-    log('[upload] 파일 전송 중 (' + (f.size/1048576).toFixed(1) + 'MB)');
-    return new Promise(function(res){ var rd = new FileReader(); rd.onload = function(){ res(rd.result.split(',')[1]); }; rd.readAsDataURL(f); })
-      .then(function(b64){
-        return bridge({ op:'put', upload_url: d.upload_url, data_b64: b64 });
+  function updateEnvironmentBanner(environment){
+    if (environment === "production"){
+      envBanner.textContent = "현재 프로덕션(정식) 환경으로 승인되어 있습니다. TikTok 계정으로 바로 이용할 수 있습니다.";
+      envBanner.className = "banner banner-production";
+    } else if (environment === "sandbox"){
+      envBanner.textContent = "현재 TikTok 샌드박스(테스트) 환경입니다. TikTok 개발자 콘솔에 테스트 사용자로 등록된 계정만 이용할 수 있으며, 프로덕션 승인 전에는 다른 계정은 인증이 거부될 수 있습니다.";
+      envBanner.className = "banner banner-sandbox";
+    } else {
+      envBanner.textContent = "환경 확인 전입니다. TikTok 계정 연결을 시작하면 실제 서비스 환경(샌드박스/프로덕션)이 여기에 표시됩니다.";
+      envBanner.className = "banner banner-unknown";
+    }
+  }
+
+  async function callBridge(op, params){
+    var res;
+    var body = JSON.stringify(Object.assign({ op: op }, params || {}));
+    try {
+      res = await fetch(BRIDGE_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: body
       });
-  })
-  .then(function(j2){
-    if (!j2) return;
-    log('[upload] 전송 완료 status=' + j2.status);
-    document.getElementById('resultText').innerHTML = '<span class="ok">업로드 완료.</span> TikTok 앱/스튜디오의 초안함에서 확인하고 게시할 수 있습니다.';
-    btn.textContent = '업로드 완료';
-    
-    document.getElementById('btnOpen').style.display = 'inline-block';
-  });
-};
+    } catch (networkErr) {
+      throw new Error("서버에 연결할 수 없습니다. 네트워크 상태를 확인한 뒤 다시 시도해주세요.");
+    }
+    var json = null;
+    try {
+      json = await res.json();
+    } catch (parseErr) {
+      json = null;
+    }
+    if (!res.ok){
+      if (res.status === 429){
+        throw new Error("요청이 많아 일시적으로 처리할 수 없습니다. 잠시 후 다시 시도해주세요.");
+      }
+      if (res.status >= 500){
+        throw new Error("서버에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해주세요.");
+      }
+      throw new Error((json && json.error) ? String(json.error) : "요청을 처리할 수 없습니다.");
+    }
+    if (!json || json.ok !== true){
+      throw new Error((json && json.error) ? String(json.error) : "요청이 정상적으로 처리되지 않았습니다.");
+    }
+    return json;
+  }
 
-document.getElementById('btnOpen').onclick = function(){
-  location.href = 'https://www.tiktok.com/tiktokstudio/content';
-};
+  function renderIdentity(displayName, avatarUrl){
+    displayNameEl.textContent = displayName || "TikTok 사용자";
+    if (avatarUrl){
+      avatarImg.src = avatarUrl;
+      avatarImg.alt = (displayName || "TikTok 사용자") + " 프로필 이미지";
+      avatarImg.style.display = "";
+    } else {
+      avatarImg.style.display = "none";
+    }
+    identityView.hidden = false;
+    connectBtn.hidden = true;
+    disconnectBtn.hidden = false;
+    updateUploadButtonState();
+  }
+
+  function resetUploadFlow(){
+    stopAutoPolling();
+    currentPublishId = null;
+    setPlainStatus("");
+    nextStepsEl.hidden = true;
+    progressTrack.style.display = "none";
+    progressFill.style.width = "0%";
+    checkStatusBtn.disabled = true;
+  }
+
+  function resetAll(){
+    session = null;
+    identityView.hidden = true;
+    connectBtn.hidden = false;
+    disconnectBtn.hidden = true;
+    avatarImg.src = "";
+    displayNameEl.textContent = "";
+    if (currentObjectUrl){
+      URL.revokeObjectURL(currentObjectUrl);
+      currentObjectUrl = null;
+    }
+    selectedFile = null;
+    fileInput.value = "";
+    previewEl.src = "";
+    previewEl.style.display = "none";
+    consentCheck.checked = false;
+    resetUploadFlow();
+    updateUploadButtonState();
+  }
+
+  function updateUploadButtonState(){
+    var ready = !!(selectedFile && consentCheck.checked && session);
+    uploadBtn.disabled = !ready;
+  }
+
+  async function handleConnect(){
+    setError("");
+    connectBtn.disabled = true;
+    try {
+      var data = await callBridge("public_start", {});
+      sessionStorage.setItem("tt_oauth_state", data.state);
+      updateEnvironmentBanner(data.environment);
+      window.location.assign(data.authorize_url);
+    } catch (err) {
+      setError(err.message);
+      connectBtn.disabled = false;
+    }
+  }
+
+  async function handleDisconnect(){
+    if (!session) return;
+    setError("");
+    disconnectBtn.disabled = true;
+    try {
+      await callBridge("public_disconnect", { session: session });
+    } catch (err) {
+      setError(err.message + " (로컬 연결 정보는 삭제되었습니다)");
+    } finally {
+      resetAll();
+      disconnectBtn.disabled = false;
+    }
+  }
+
+  function isLikelyVideoFile(file){
+    return /\.(mp4|mov)$/i.test(file.name || "") && (!file.type || file.type === "video/mp4" || file.type === "video/quicktime");
+  }
+
+  function handleFileChange(e){
+    setError("");
+    selectedFile = null; consentCheck.checked = false; updateUploadButtonState();
+    var file = e.target.files && e.target.files[0];
+    if (!file){
+      return;
+    }
+    if (!isLikelyVideoFile(file)){
+      setError("동영상 파일만 업로드할 수 있습니다.");
+      fileInput.value = "";
+      return;
+    }
+    if (file.size > MAX_FILE_BYTES){
+      setError("파일 용량이 20MB를 초과합니다. 더 작은 파일을 선택해주세요.");
+      fileInput.value = "";
+      return;
+    }
+    resetUploadFlow();
+    if (currentObjectUrl){
+      URL.revokeObjectURL(currentObjectUrl);
+      currentObjectUrl = null;
+    }
+    selectedFile = file;
+    currentObjectUrl = URL.createObjectURL(file);
+    previewEl.src = currentObjectUrl;
+    previewEl.style.display = "";
+    updateUploadButtonState();
+  }
+
+  function arrayBufferToBase64(buffer){
+    var binary = "";
+    var bytes = new Uint8Array(buffer);
+    var chunkSize = 0x8000;
+    for (var i = 0; i < bytes.length; i += chunkSize){
+      binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+    }
+    return btoa(binary);
+  }
+
+  function friendlyFailReason(reason){
+    var text = String(reason);
+    if (text.length > 0 && text.length <= 200) return text;
+    return "자세한 원인은 확인할 수 없습니다.";
+  }
+
+  function renderStatus(status, failReason){
+    var cls = "status-message";
+    var text;
+    if (status === "PROCESSING_UPLOAD"){
+      text = "업로드 처리 중입니다. 잠시만 기다려주세요.";
+    } else if (status === "SEND_TO_USER_INBOX"){
+      text = "초안이 TikTok 받은함으로 전송되었습니다. 아래 안내에 따라 TikTok 앱에서 직접 확인하고 게시해주세요.";
+      cls += " status-success";
+    } else if (status === "PUBLISH_COMPLETE"){
+      text = "게시가 완료되었습니다.";
+      cls += " status-success";
+    } else if (status === "FAILED"){
+      text = "처리에 실패했습니다" + (failReason ? (": " + friendlyFailReason(failReason)) : ".");
+      cls += " status-error";
+    } else {
+      text = "상태를 확인하는 중입니다.";
+    }
+    statusMessageEl.className = "msg " + cls;
+    statusMessageEl.textContent = text;
+    statusMessageEl.hidden = false;
+    nextStepsEl.hidden = !(status === "SEND_TO_USER_INBOX" || status === "PUBLISH_COMPLETE");
+    return status;
+  }
+
+  function stopAutoPolling(){
+    if (autoPollTimer){
+      clearInterval(autoPollTimer);
+      autoPollTimer = null;
+    }
+  }
+
+  async function pollStatusOnce(countsTowardAuto){
+    if (!session || !currentPublishId){
+      stopAutoPolling();
+      return;
+    }
+    if (countsTowardAuto) autoPollCount++;
+    try {
+      var data = await callBridge("public_status", { session: session, publish_id: currentPublishId });
+      var status = renderStatus(data.status, data.fail_reason);
+      if (status === "SEND_TO_USER_INBOX" || status === "PUBLISH_COMPLETE" || status === "FAILED"){
+        stopAutoPolling();
+      }
+    } catch (err) {
+      setError(err.message);
+    }
+    if (countsTowardAuto && autoPollCount >= AUTO_POLL_MAX_TRIES){
+      stopAutoPolling();
+      setError("자동 상태 확인을 중지했습니다. \"상태 확인\" 버튼으로 직접 확인해주세요.");
+    }
+  }
+
+  function startAutoPolling(){
+    stopAutoPolling();
+    autoPollCount = 0;
+    checkStatusBtn.disabled = false;
+    pollStatusOnce(true);
+    autoPollTimer = setInterval(function(){ pollStatusOnce(true); }, AUTO_POLL_INTERVAL_MS);
+  }
+
+  async function manualCheckStatus(){
+    setError("");
+    if (!session || !currentPublishId){
+      setError("먼저 업로드를 시작해주세요.");
+      return;
+    }
+    await pollStatusOnce(false);
+  }
+
+  async function handleUpload(){
+    if (!selectedFile || !consentCheck.checked || !session) return;
+    setError("");
+    uploadBtn.disabled = true;
+    fileInput.disabled = true;
+    consentCheck.disabled = true;
+    disconnectBtn.disabled = true;
+    progressTrack.style.display = "";
+    progressFill.style.width = "0%";
+    try {
+      setPlainStatus("업로드를 준비하는 중입니다...");
+      var videoSize = selectedFile.size;
+      var initData = await callBridge("public_init", {
+        session: session,
+        video_size: videoSize,
+        chunk_size: CHUNK_SIZE
+      });
+      currentPublishId = initData.publish_id;
+
+      // TikTok chunked upload rule: total_chunk_count = floor(size / chunk_size).
+      // The final chunk absorbs the remainder so it stays under 10MB.
+      var totalChunks = Math.max(1, Math.floor(videoSize / CHUNK_SIZE));
+
+      for (var i = 0; i < totalChunks; i++){
+        var start = i * CHUNK_SIZE;
+        var end = (i === totalChunks - 1) ? videoSize : (start + CHUNK_SIZE);
+        var blobChunk = selectedFile.slice(start, end);
+        var buffer = await blobChunk.arrayBuffer();
+        var base64 = arrayBufferToBase64(buffer);
+        setPlainStatus("업로드 중... (" + (i + 1) + "/" + totalChunks + ")");
+        progressFill.style.width = Math.round(((i + 1) / totalChunks) * 100) + "%";
+        await callBridge("public_put", {
+          session: session,
+          publish_id: currentPublishId,
+          data_b64: base64,
+          first: start,
+          total: videoSize
+        });
+      }
+
+      setPlainStatus("업로드가 완료되었습니다. 처리 상태를 확인하는 중입니다...");
+      startAutoPolling();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      fileInput.disabled = false;
+      consentCheck.disabled = false;
+      disconnectBtn.disabled = false;
+      updateUploadButtonState();
+    }
+  }
+
+  async function handleOAuthCallbackIfPresent(){
+    var url = new URL(window.location.href);
+    var code = url.searchParams.get("code");
+    var state = url.searchParams.get("state");
+    if (!code || !state){
+      return;
+    }
+    var storedState = sessionStorage.getItem("tt_oauth_state");
+
+    // Strip auth params from the visible URL/history immediately either way.
+    ["code","state","error","error_description","scopes"].forEach(function(k){ url.searchParams.delete(k); });
+    var cleanedQuery = url.searchParams.toString();
+    window.history.replaceState({}, document.title, url.pathname + (cleanedQuery ? ("?" + cleanedQuery) : "") + url.hash);
+
+    if (!storedState || storedState !== state){
+      sessionStorage.removeItem("tt_oauth_state");
+      setError("인증 상태(state) 값이 일치하지 않습니다. 보안을 위해 연결을 다시 시도해주세요.");
+      return;
+    }
+    sessionStorage.removeItem("tt_oauth_state");
+    setPlainStatus("계정 인증을 확인하는 중입니다...");
+    try {
+      var data = await callBridge("public_token", { code: code, state: state });
+      session = data.session; // memory only, never persisted
+      updateEnvironmentBanner(data.environment);
+      renderIdentity(data.display_name, data.avatar_url);
+      setPlainStatus("");
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  window.addEventListener("beforeunload", function(){
+    if (currentObjectUrl) URL.revokeObjectURL(currentObjectUrl);
+  });
+
+  connectBtn.addEventListener("click", handleConnect);
+  disconnectBtn.addEventListener("click", handleDisconnect);
+  fileInput.addEventListener("change", handleFileChange);
+  consentCheck.addEventListener("change", updateUploadButtonState);
+  uploadBtn.addEventListener("click", handleUpload);
+  checkStatusBtn.addEventListener("click", manualCheckStatus);
+
+  updateEnvironmentBanner(null);
+  handleOAuthCallbackIfPresent();
+})();
 </script>
 </body>
 </html>
