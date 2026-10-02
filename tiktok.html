@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TikTok 크리에이터 업로더 (초안 업로드)</title>
+<title>라이프포터 크리에이터 업로더</title>
 <meta name="description" content="TikTok 계정을 연결해 영상 초안을 본인의 TikTok 받은함으로 업로드하는 공개 서비스입니다.">
 <!--
   배포 전 https://script.google.com/macros/s/AKfycbx5JHWWHL515vqaBuBbF3JD3XodQuYYfAUBa4-ktsQ8o2m0NrXQGJnm9zmTOLgWy2am/exec 을 실제 브릿지(Google Apps Script 웹앱) URL로 교체하세요.
@@ -22,6 +22,7 @@
     --radius:12px;
   }
   *{box-sizing:border-box;}
+  [hidden]{display:none!important;}
   html,body{margin:0;padding:0;}
   body{
     background:var(--bg); color:var(--fg);
@@ -375,7 +376,7 @@
     selectedFile = file;
     currentObjectUrl = URL.createObjectURL(file);
     previewEl.src = currentObjectUrl;
-    previewEl.style.display = "";
+    previewEl.style.display = "block";
     updateUploadButtonState();
   }
 
